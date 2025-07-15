@@ -5,12 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>リベンジオセロ</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #eee; transition: background 0.5s; }
+        body { 
+            font-family: sans-serif; 
+            text-align: center; 
+            background: #eee; 
+            transition: background 0.5s;
+        }
         canvas { border: 2px solid black; margin-top: 10px;}
         #controls { margin: 10px 0; }
-        #rules { max-width: 600px; margin: 0 auto; text-align: left; background: #f8f8f8; padding: 10px; border-radius: 8px;}
+        #rules { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            text-align: left; 
+            background: #f8f8f8; 
+            padding: 10px; 
+            border-radius: 8px;
+        }
 
-        /* リベンジ背景（暗赤系） */
+        /* リベンジ背景（暗赤色系） */
         .revenge-level-1-black, .revenge-level-1-white { background: #5c1a1a; }
         .revenge-level-2-black, .revenge-level-2-white { background: #7a2222; }
         .revenge-level-3-black, .revenge-level-3-white { background: #a52a2a; }
@@ -38,6 +50,7 @@
         <select id="difficulty">
             <option value="easy">Easy (Random)</option>
             <option value="hard">Hard (Greedy)</option>
+            <option value="montecarlo">Monte Carlo</option>
         </select>
     </div>
     <div id="score"></div>
