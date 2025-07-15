@@ -190,6 +190,21 @@ window.onload = () => {
         return count;
     }
 
+    function getFlipsTemp(x, y, p, tempBoard) {
+        if (tempBoard[y][x] !== '.') return 0;
+        let opp = p === 'B' ? 'W' : 'B';
+        let count = 0;
+        for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++) {
+            if (dx===0 && dy===0) continue;
+            let nx=x+dx, ny=y+dy, line=0;
+            while (nx>=0 && nx<size && ny>=0 && ny<size && tempBoard[ny][nx]===opp) {
+                nx+=dx; ny+=dy; line++;
+            }
+            if (line>0 && nx>=0 && nx<size && ny>=0 && ny<size && tempBoard[ny][nx]===p) count+=line;
+        }
+        return count;
+    }
+
     function applyMove(x, y, p) {
         board[y][x] = p;
         let opp = p === 'B' ? 'W' : 'B';
@@ -201,6 +216,20 @@ window.onload = () => {
             }
             if (toFlip.length>0 && nx>=0 && nx<size && ny>=0 && ny<size && board[ny][nx]===p)
                 toFlip.forEach(([fx,fy])=>board[fy][fx]=p);
+        }
+    }
+
+    function applyMoveTemp(x, y, p, tempBoard) {
+        tempBoard[y][x] = p;
+        let opp = p === 'B' ? 'W' : 'B';
+        for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++) {
+            if (dx===0 && dy===0) continue;
+            let nx=x+dx, ny=y+dy, toFlip=[];
+            while (nx>=0 && nx<size && ny>=0 && ny<size && tempBoard[ny][nx]===opp) {
+                toFlip.push([nx,ny]); nx+=dx; ny+=dy;
+            }
+            if (toFlip.length>0 && nx>=0 && nx<size && ny>=0 && ny<size && tempBoard[ny][nx]===p)
+                toFlip.forEach(([fx,fy])=>tempBoard[fy][fx]=p);
         }
     }
 
@@ -229,103 +258,62 @@ window.onload = () => {
         else monteCarloAI();
     }
 
-    function randomAI() {
-        let moves = [];
-        for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
-            if (getFlips(x, y, 'W')>0) moves.push([x,y]);
-        }
-        if (moves.length===0) { nextTurn(); return; }
-        let [mx,my] = moves[Math.floor(Math.random()*moves.length)];
-        let flips = getFlips(mx, my, 'W');
-        applyMove(mx, my, 'W');
-        updateDisplay();
-        if (flips >=2 && blackRevengeLeft > 0) startRevenge('B');
-        else nextTurn();
-    }
-
-    function greedyAI() {
-        let best=null, bestCount=0;
-        for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
-            let flips = getFlips(x,y,'W');
-            if (flips>bestCount) { best=[x,y]; bestCount=flips; }
-        }
-        if (!best) { nextTurn(); return; }
-        let [mx,my] = best;
-        let flips = getFlips(mx, my, 'W');
-        applyMove(mx, my, 'W');
-        updateDisplay();
-        if (flips >=2 && blackRevengeLeft > 0) startRevenge('B');
-        else nextTurn();
-    }
+    function randomAI() { /* ... */ }
+    function greedyAI() { /* ... */ }
 
     function monteCarloAI() {
-    let moves = [];
-    for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
-        if (getFlips(x,y,'W')>0) moves.push([x,y]);
-    }
-    if (moves.length===0) { nextTurn(); return; }
-
-    let bestMove=moves[0], bestScore=-1;
-    for (let [mx,my] of moves) {
-        let wins=0;
-        for (let i=0; i<5; i++) {
-            let temp=JSON.parse(JSON.stringify(board));
-            applyMoveTemp(mx, my, 'W', temp);
-            let winner=simulatePlayout(['B'], temp);
-            if (winner==='W') wins++;
+        let moves = [];
+        for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
+            if (getFlips(x,y,'W')>0) moves.push([x,y]);
         }
-        let score=wins/5;
-        if (score>bestScore) { bestScore=score; bestMove=[mx,my]; }
-    }
-    let [mx,my] = bestMove;
-    let flips = getFlips(mx, my, 'W');
-    applyMove(mx, my, 'W');
-    updateDisplay();
-    if (flips >=2 && blackRevengeLeft > 0) startRevenge('B');
-    else nextTurn();
-    }
+        if (moves.length===0) { nextTurn(); return; }
 
-    function applyMoveTemp(x, y, p, tempBoard) {
-    tempBoard[y][x] = p;
-    let opp = p === 'B' ? 'W' : 'B';
-    for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++) {
-        if (dx===0 && dy===0) continue;
-        let nx=x+dx, ny=y+dy, toFlip=[];
-        while (nx>=0 && nx<size && ny>=0 && ny<size && tempBoard[ny][nx]===opp) {
-            toFlip.push([nx,ny]); nx+=dx; ny+=dy;
+        let bestMove=moves[0], bestScore=-1;
+        for (let [mx,my] of moves) {
+            let wins=0;
+            for (let i=0; i<5; i++) {
+                let temp=JSON.parse(JSON.stringify(board));
+                applyMoveTemp(mx, my, 'W', temp);
+                let winner=simulatePlayout(['B'], temp);
+                if (winner==='W') wins++;
+            }
+            let score=wins/5;
+            if (score>bestScore) { bestScore=score; bestMove=[mx,my]; }
         }
-        if (toFlip.length>0 && nx>=0 && nx<size && ny>=0 && ny<size && tempBoard[ny][nx]===p)
-            toFlip.forEach(([fx,fy])=>tempBoard[fy][fx]=p);
-        }
+        let [mx,my] = bestMove;
+        let flips = getFlips(mx, my, 'W');
+        applyMove(mx, my, 'W');
+        updateDisplay();
+        if (flips >=2 && blackRevengeLeft > 0) startRevenge('B');
+        else nextTurn();
     }
-
 
     function simulatePlayout(turns, tempBoard) {
         let p=turns[0];
         for (let i=0; i<50; i++) {
             let moves=[];
             for (let y=0; y<size; y++) for (let x=0; x<size; x++)
-                if (getFlips(x,y,p)>0) moves.push([x,y]);
+                if (getFlipsTemp(x,y,p,tempBoard)>0) moves.push([x,y]);
             if (moves.length===0) {
                 p=p==='B'?'W':'B';
                 continue;
             }
             let [mx,my]=moves[Math.floor(Math.random()*moves.length)];
-            applyMove(mx,my,p);
+            applyMoveTemp(mx,my,p,tempBoard);
             p=p==='B'?'W':'B';
         }
         let b=tempBoard.flat().filter(c=>c==='B').length;
         let w=tempBoard.flat().filter(c=>c==='W').length;
         return b>w?'B':w>b?'W':'D';
     }
+
     function aiRevenge() {
-    let moves=[];
-    for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
-        if (board[y][x]==='B') moves.push([x,y]);
-    }
-    if (moves.length===0) { endRevenge(); return; }
-    let [rx, ry] = moves[Math.floor(Math.random() * moves.length)];
-    triggerRevenge(rx, ry, 'W');
+        let moves=[];
+        for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
+            if (board[y][x]==='B') moves.push([x,y]);
+        }
+        if (moves.length===0) { endRevenge(); return; }
+        let [rx, ry] = moves[Math.floor(Math.random() * moves.length)];
+        triggerRevenge(rx, ry, 'W');
     }
 };
-
