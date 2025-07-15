@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>リベンジオセロ</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #eee; transition: background 0.5s; }
+        canvas { border: 2px solid black; margin-top: 10px;}
+        #controls { margin: 10px 0; }
+        #rules { max-width: 600px; margin: 0 auto; text-align: left; background: #f8f8f8; padding: 10px; border-radius: 8px;}
+
+        /* リベンジ背景（暗赤系） */
+        .revenge-level-1-black, .revenge-level-1-white { background: #5c1a1a; }
+        .revenge-level-2-black, .revenge-level-2-white { background: #7a2222; }
+        .revenge-level-3-black, .revenge-level-3-white { background: #a52a2a; }
+    </style>
+</head>
+<body>
+    <h1>リベンジオセロ 🎲</h1>
+    <h2>ルール説明</h2>
+    <div id="rules">
+        これはちょっとヘンテコなオセロ！<br>
+        <br>
+        ▶ 石を置いて相手の石を挟むと、いつものように裏返る<br> 
+        ▶ ただし！<strong>2個以上</strong>の石を一気に裏返すと、<br>
+        相手に「リベンジチャンス」が発動！<br>
+        <br>
+        🔥 相手はあなたの石を1つ選んで、自分の色に変えちゃう...<br> 
+             さらに挟まれた石は裏返る！？<br> 
+        <br>
+        最後に盤面が埋まったら、石が多い方の勝ち！<br>
+        ちょっと理不尽なオセロをお楽しみあれ！
+    </div>
+
+    <div id="controls">
+        <label>AI Difficulty: </label>
+        <select id="difficulty">
+            <option value="easy">Easy (Random)</option>
+            <option value="hard">Hard (Greedy)</option>
+        </select>
+    </div>
+    <div id="score"></div>
+    <div id="specialCount"></div>
+    <div id="message"></div>
+    <canvas id="board" width="400" height="400"></canvas>
+
+    <script src="script.js"></script>
+</body>
+</html>
