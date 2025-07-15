@@ -344,6 +344,22 @@ window.onload = () => {
         else nextTurn();
     }
 
+    function getFlipsTemp(x, y, p, tempBoard) {
+        if (tempBoard[y][x] !== '.') return 0;
+        let opp = p === 'B' ? 'W' : 'B';
+        let count = 0;
+        for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++) {
+            if (dx===0 && dy===0) continue;
+            let nx=x+dx, ny=y+dy, line=0;
+            while (nx>=0 && nx<size && ny>=0 && ny<size && tempBoard[ny][nx]===opp) {
+                nx+=dx; ny+=dy; line++;
+            }
+            if (line>0 && nx>=0 && nx<size && ny>=0 && ny<size && tempBoard[ny][nx]===p) count+=line;
+        }
+        return count;
+    }
+
+
     function simulatePlayout(turns, tempBoard) {
         let p=turns[0];
         for (let i=0; i<50; i++) {
