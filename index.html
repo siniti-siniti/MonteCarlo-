@@ -6,12 +6,8 @@
     <title>リベンジオセロ</title>
     <style>
         body { font-family: sans-serif; text-align: center; background: #eee; transition: background 0.5s; }
-        canvas {
-            border: 2px solid black;
-            margin: 20px auto;
-            display: block;
-        }
-        #controls, #score, #specialCount, #message { margin: 10px; }
+        canvas { border: 2px solid black; margin: 20px auto; display: block; }
+        #controls, #score, #specialCount, #message, #musicToggle { margin: 10px; }
         #rules {
             max-width: 600px; margin: 0 auto; text-align: left;
             background: #f8f8f8; padding: 10px; border-radius: 8px;
@@ -22,9 +18,6 @@
             background: #c33; color: white; border: none; border-radius: 8px;
             display: none; cursor: pointer;
         }
-        .revenge-level-1-black, .revenge-level-1-white { background: #5c1a1a; }
-        .revenge-level-2-black, .revenge-level-2-white { background: #7a2222; }
-        .revenge-level-3-black, .revenge-level-3-white { background: #a52a2a; }
     </style>
 </head>
 <body>
@@ -33,44 +26,41 @@
         これはちょっとヘンテコなオセロ！<br>
         ▶ 石を置いて相手の石を挟むと裏返る<br>
         ▶ <strong>2個以上</strong>の石を一気に裏返すと相手にリベンジチャンス！<br>
-        🔥 相手は好きなタイミングであなたの石を1つ奪い返すか、
-        QUIT REVENGEでリベンジを放棄するか選べる！<br>
-        最後に石が多い方の勝ち！<br><br>
-        ゲーム開始設定：
-        <div>
-            <label>盤面サイズ:</label>
-            <select id="boardSize">
-                <option value="4">4x4</option>
-                <option value="6">6x6</option>
-                <option value="8" selected>8x8</option>
-                <option value="10">10x10</option>
-            </select>
-            <label>リベンジ回数:</label>
-            <select id="revengeLimit">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5" selected>5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-                <option value="10">10</option>
-                <option value="9999">無制限</option>
-            </select>
-            <label>AI難易度:</label>
-            <select id="difficulty">
-                <option value="easy">Easy (Random)</option>
-                <option value="hard">Hard (Greedy)</option>
-                <option value="montecarlo">Monte Carlo</option>
-            </select>
-            <button id="startBtn">ゲーム開始</button>
-        </div>
+        🔥 相手は好きなタイミングであなたの石を1つ奪い返すか、QUIT REVENGEでリベンジを放棄するか選べる！<br>
+        最後に石が多い方の勝ち！
+    </div>
+    <div>
+        <label>盤面サイズ:</label>
+        <select id="boardSize">
+            <option value="4">4x4</option>
+            <option value="6">6x6</option>
+            <option value="8" selected>8x8</option>
+            <option value="10">10x10</option>
+        </select>
+        <label>リベンジ回数:</label>
+        <select id="revengeLimit">
+            <option value="1">1</option>
+            <option value="5" selected>5</option>
+            <option value="10">10</option>
+        </select>
+        <label>AI難易度:</label>
+        <select id="difficulty">
+            <option value="easy">Easy</option>
+            <option value="hard">Greedy</option>
+            <option value="montecarlo">Monte Carlo</option>
+        </select>
+        <button id="startBtn">ゲーム開始</button>
     </div>
     <div id="score"></div>
     <div id="specialCount"></div>
     <div id="message"></div>
+    <div>
+        <label>BGM 音量:</label>
+        <input type="range" id="bgmVolume" min="0" max="1" step="0.01" value="0.5">
+        <label>SE 音量:</label>
+        <input type="range" id="seVolume" min="0" max="1" step="0.01" value="0.5">
+    </div>
+    <button id="musicToggle">BGM OFF</button>
     <canvas id="board" width="400" height="400" style="display:none;"></canvas>
     <button id="revengeBtn">QUIT REVENGE</button>
     <script src="script.js"></script>
