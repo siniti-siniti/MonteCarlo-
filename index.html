@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>リベンジオセロ</title>
     <style>
         body { font-family: sans-serif; text-align: center; background: #eee; transition: background 0.5s; }
@@ -18,10 +18,6 @@
             background: #c33; color: white; border: none; border-radius: 8px;
             display: none; cursor: pointer;
         }
-        #revengeBtn.flash {
-            animation: flash 1s infinite;
-        }
-        @keyframes flash { 0%,100%{background:#c33;} 50%{background:#e66;} }
         .revenge-level-1-black, .revenge-level-1-white { background: #5c1a1a; }
         .revenge-level-2-black, .revenge-level-2-white { background: #7a2222; }
         .revenge-level-3-black, .revenge-level-3-white { background: #a52a2a; }
@@ -31,11 +27,11 @@
     <h1>リベンジオセロ 🎲</h1>
     <div id="rules">
         これはちょっとヘンテコなオセロ！<br>
-        ▶ 石を置いて相手の石を挟むと、いつものように裏返る<br>
-        ▶ ただし！<strong>2個以上</strong>の石を一気に裏返すと、相手に「リベンジチャンス」が発動！<br>
-        🔥 相手は右下のREVENGEボタンを押して好きなタイミングであなたの石を1つ奪い返す！<br>
-        さらに挟まれた石は裏返る！？<br>
-        最後に盤面が埋まったら、石が多い方の勝ち！<br>
+        ▶ 石を置いて相手の石を挟むと裏返る<br>
+        ▶ <strong>2個以上</strong>の石を一気に裏返すと相手にリベンジチャンス！<br>
+        🔥 相手は好きなタイミングであなたの石を1つ奪い返すか、<br>
+        QUIT REVENGEでリベンジを放棄するか選べる！<br>
+        最後に石が多い方の勝ち！
     </div>
     <div id="controls">
         <label>AI Difficulty:</label>
@@ -49,7 +45,7 @@
     <div id="specialCount"></div>
     <div id="message"></div>
     <canvas id="board" width="400" height="400"></canvas>
-    <button id="revengeBtn">REVENGE</button>
+    <button id="revengeBtn">QUIT REVENGE</button>
     <script src="script.js"></script>
 </body>
 </html>
