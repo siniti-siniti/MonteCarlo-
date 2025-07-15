@@ -208,7 +208,6 @@ window.onload = () => {
                 else if (emptyCells <= 20) probability = 0.7;
                 else if (emptyCells <= 30) probability = 0.4;
 
-                // 👇 AIが石30%未満なら緊急的にリベンジ率アップ
                 if (wRatio < 0.3) {
                     probability = Math.max(probability, 0.8);
                 }
@@ -220,7 +219,7 @@ window.onload = () => {
                 }
             }, 800);
         }
-    }
+    }  // ← これで完全に閉じました！
 
     function triggerRevenge(x, y, color) {
         seRevengeFlip.play();
