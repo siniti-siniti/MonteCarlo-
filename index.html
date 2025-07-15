@@ -31,9 +31,35 @@
         ▶ <strong>2個以上</strong>の石を一気に裏返すと相手にリベンジチャンス！<br>
         🔥 相手は好きなタイミングであなたの石を1つ奪い返すか、<br>
         QUIT REVENGEでリベンジを放棄するか選べる！<br>
-        最後に石が多い方の勝ち！
+        最後に石が多い方の勝ち！<br><br>
+        ゲーム開始設定：
+        <div>
+            <label>盤面サイズ:</label>
+            <select id="boardSize">
+                <option value="5">5x5</option>
+                <option value="6">6x6</option>
+                <option value="7">7x7</option>
+                <option value="8" selected>8x8</option>
+                <option value="9">9x9</option>
+            </select>
+            <label>リベンジ回数:</label>
+            <select id="revengeLimit">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5" selected>5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="9999">無制限</option>
+            </select>
+            <button onclick="startGame()">ゲーム開始</button>
+        </div>
     </div>
-    <div id="controls">
+    <div id="controls" style="display:none;">
         <label>AI Difficulty:</label>
         <select id="difficulty">
             <option value="easy">Easy (Random)</option>
@@ -44,7 +70,7 @@
     <div id="score"></div>
     <div id="specialCount"></div>
     <div id="message"></div>
-    <canvas id="board" width="400" height="400"></canvas>
+    <canvas id="board" width="400" height="400" style="display:none;"></canvas>
     <button id="revengeBtn">QUIT REVENGE</button>
     <script src="script.js"></script>
 </body>
