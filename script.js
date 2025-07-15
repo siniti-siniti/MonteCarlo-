@@ -128,6 +128,9 @@ canvas.addEventListener("click", e => {
     const x = Math.floor((e.clientX - rect.left) / cellSize);
     const y = Math.floor((e.clientY - rect.top) / cellSize);
 
+    // === NEW: 範囲外なら無視 ===
+    if (x < 0 || x >= size || y < 0 || y >= size) return;
+
     if (specialMode) {
         if (specialPlayer === 'B' && board[y][x] === 'W') triggerRevenge(x, y, 'B');
         else if (specialPlayer === 'W' && board[y][x] === 'B') triggerRevenge(x, y, 'W');
