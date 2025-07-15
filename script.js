@@ -259,31 +259,46 @@ window.onload = () => {
     }
 
     function monteCarloAI() {
-        let moves = [];
-        for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
-            if (getFlips(x,y,'W')>0) moves.push([x,y]);
-        }
-        if (moves.length===0) { nextTurn(); return; }
-
-        let bestMove=moves[0], bestScore=-1;
-        for (let [mx,my] of moves) {
-            let wins=0;
-            for (let i=0; i<5; i++) {
-                let temp=JSON.parse(JSON.stringify(board));
-                applyMove(mx, my, 'W');
-                let winner=simulatePlayout(['B'], temp);
-                if (winner==='W') wins++;
-            }
-            let score=wins/5;
-            if (score>bestScore) { bestScore=score; bestMove=[mx,my]; }
-        }
-        let [mx,my] = bestMove;
-        let flips = getFlips(mx, my, 'W');
-        applyMove(mx, my, 'W');
-        updateDisplay();
-        if (flips >=2 && blackRevengeLeft > 0) startRevenge('B');
-        else nextTurn();
+    let moves = [];
+    for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
+        if (getFlips(x,y,'W')>0) moves.push([x,y]);
     }
+    if (moves.length===0) { nextTurn(); return; }
+
+    let bestMove=moves[0], bestScore=-1;
+    for (let [mx,my] of moves) {
+        let wins=0;
+        for (let i=0; i<5; i++) {
+            let temp=JSON.parse(JSON.stringify(board));
+            applyMoveTemp(mx, my, 'W', temp);
+            let winner=simulatePlayout(['B'], temp);
+            if (winner==='W') wins++;
+        }
+        let score=wins/5;
+        if (score>bestScore) { bestScore=score; bestMove=[mx,my]; }
+    }
+    let [mx,my] = bestMove;
+    let flips = getFlips(mx, my, 'W');
+    applyMove(mx, my, 'W');
+    updateDisplay();
+    if (flips >=2 && blackRevengeLeft > 0) startRevenge('B');
+    else nextTurn();
+    }
+
+    function applyMoveTemp(x, y, p, tempBoard) {
+    tempBoard[y][x] = p;
+    let opp = p === 'B' ? 'W' : 'B';
+    for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++) {
+        if (dx===0 && dy===0) continue;
+        let nx=x+dx, ny=y+dy, toFlip=[];
+        while (nx>=0 && nx<size && ny>=0 && ny<size && tempBoard[ny][nx]===opp) {
+            toFlip.push([nx,ny]); nx+=dx; ny+=dy;
+        }
+        if (toFlip.length>0 && nx>=0 && nx<size && ny>=0 && ny<size && tempBoard[ny][nx]===p)
+            toFlip.forEach(([fx,fy])=>tempBoard[fy][fx]=p);
+        }
+    }
+
 
     function simulatePlayout(turns, tempBoard) {
         let p=turns[0];
