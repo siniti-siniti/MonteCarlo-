@@ -10,7 +10,7 @@ window.onload = () => {
 
     // BGM
     const musicList = [
-        new Audio("bgm1.mp3"),
+        new Audio("あ.m4a"),
         new Audio("待機.mp3"),
         new Audio("敗走.m4a")
     ];
