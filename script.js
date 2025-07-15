@@ -15,11 +15,8 @@ document.getElementById("startBtn").addEventListener("click", startGame);
 
 function startGame() {
     size = parseInt(document.getElementById("boardSize").value);
-    cellSize = 400 / size;
-    blackRevengeLeft = whiteRevengeLeft = 
-        parseInt(document.getElementById("revengeLimit").value);
+    blackRevengeLeft = whiteRevengeLeft = parseInt(document.getElementById("revengeLimit").value);
     difficulty = document.getElementById("difficulty").value;
-    aiEnabled = true;
 
     document.getElementById("boardSize").disabled = true;
     document.getElementById("revengeLimit").disabled = true;
@@ -29,6 +26,10 @@ function startGame() {
     canvas = document.getElementById("board");
     ctx = canvas.getContext("2d");
     canvas.style.display = "block";
+
+    canvas.width = 400;
+    canvas.height = 400;
+    cellSize = 400 / size;
 
     initBoard();
     updateDisplay();
@@ -87,7 +88,7 @@ function drawBoard() {
 function updateScore() {
     let b = 0, w = 0;
     board.flat().forEach(c => { if (c==='B') b++; else if (c==='W') w++; });
-    scoreDiv.innerText = `Black: ${b}  White: ${w}`;
+    scoreDiv.innerText = `Black: ${b}　White: ${w}`;
 }
 
 function updateSpecialCount() {
@@ -123,7 +124,10 @@ function applyMove(x, y, p) {
 
 canvas.addEventListener("click", e => {
     if (gameOver) return;
-    let x = Math.floor(e.offsetX / cellSize), y = Math.floor(e.offsetY / cellSize);
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) / cellSize);
+    const y = Math.floor((e.clientY - rect.top) / cellSize);
+
     if (specialMode) {
         if (specialPlayer === 'B' && board[y][x] === 'W') triggerRevenge(x, y, 'B');
         else if (specialPlayer === 'W' && board[y][x] === 'B') triggerRevenge(x, y, 'W');
@@ -250,20 +254,27 @@ function simulatePlayout([x, y], simBoard) {
     let simPlayer = 'W';
     applyMoveSim(x, y, simPlayer, simBoard);
     simPlayer = 'B';
+
     while (true) {
         let moves = [];
         for (let yy = 0; yy < size; yy++)
             for (let xx = 0; xx < size; xx++)
                 if (getFlipsSim(xx, yy, simPlayer, simBoard) > 0) moves.push([xx, yy]);
+
         if (!moves.length) {
             simPlayer = simPlayer === 'B' ? 'W' : 'B';
-            if (!moves.length) break;
-            continue;
+            moves = [];
+            for (let yy = 0; yy < size; yy++)
+                for (let xx = 0; xx < size; xx++)
+                    if (getFlipsSim(xx, yy, simPlayer, simBoard) > 0) moves.push([xx, yy]);
+            if (!moves.length) break;  // 両方打てないなら終了
         }
+
         let [mx, my] = moves[Math.floor(Math.random() * moves.length)];
         applyMoveSim(mx, my, simPlayer, simBoard);
         simPlayer = simPlayer === 'B' ? 'W' : 'B';
     }
+
     let b = 0, w = 0;
     simBoard.flat().forEach(c => { if (c==='B') b++; else if (c==='W') w++; });
     return b > w ? 'B' : w > b ? 'W' : 'D';
