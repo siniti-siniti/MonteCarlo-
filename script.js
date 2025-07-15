@@ -12,7 +12,7 @@ window.onload = () => {
     const musicList = [
         new Audio("bgm1.mp3"),
         new Audio("待機.mp3"),
-        new Audio("敗走.mp3")
+        new Audio("haisou.mp3")
     ];
     let currentMusic = null;
     let musicEnabled = true;
