@@ -128,7 +128,8 @@ canvas.addEventListener("click", e => {
     const x = Math.floor((e.clientX - rect.left) / cellSize);
     const y = Math.floor((e.clientY - rect.top) / cellSize);
 
-    // === NEW: 範囲外なら無視 ===
+    console.log(`Click at x=${x}, y=${y}, player=${player}`);
+
     if (x < 0 || x >= size || y < 0 || y >= size) return;
 
     if (specialMode) {
@@ -136,10 +137,15 @@ canvas.addEventListener("click", e => {
         else if (specialPlayer === 'W' && board[y][x] === 'B') triggerRevenge(x, y, 'W');
         return;
     }
-    if (player !== 'B') return;
+    if (player !== 'B') {
+        console.log("Not your turn: player=", player);
+        return;
+    }
 
     let flips = getFlips(x, y, player);
+    console.log(`Possible flips at ${x},${y} = ${flips}`);
     if (flips === 0) return;
+
     applyMove(x, y, player);
     updateDisplay();
 
@@ -161,10 +167,7 @@ function startRevenge(who) {
     messageDiv.innerText = who==='B' ? "REVENGE! Click to flip or QUIT." : "REVENGE! White is thinking...";
     updateSpecialCount();
     if (who === 'W') setTimeout(aiRevenge, 1000);
-    else {
-        revengeBtn.style.display = 'inline';
-        revengeBtn.classList.add('flash');
-    }
+    else revengeBtn.style.display = 'inline';
 }
 
 function triggerRevenge(x, y, color) {
@@ -270,7 +273,7 @@ function simulatePlayout([x, y], simBoard) {
             for (let yy = 0; yy < size; yy++)
                 for (let xx = 0; xx < size; xx++)
                     if (getFlipsSim(xx, yy, simPlayer, simBoard) > 0) moves.push([xx, yy]);
-            if (!moves.length) break;  // 両方打てないなら終了
+            if (!moves.length) break;
         }
 
         let [mx, my] = moves[Math.floor(Math.random() * moves.length)];
