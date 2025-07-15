@@ -56,16 +56,14 @@
                 <option value="10">10</option>
                 <option value="9999">無制限</option>
             </select>
+            <label>AI難易度:</label>
+            <select id="difficulty">
+                <option value="easy">Easy (Random)</option>
+                <option value="hard">Hard (Greedy)</option>
+                <option value="montecarlo">Monte Carlo</option>
+            </select>
             <button onclick="startGame()">ゲーム開始</button>
         </div>
-    </div>
-    <div id="controls" style="display:none;">
-        <label>AI Difficulty:</label>
-        <select id="difficulty">
-            <option value="easy">Easy (Random)</option>
-            <option value="hard">Hard (Greedy)</option>
-            <option value="montecarlo">Monte Carlo</option>
-        </select>
     </div>
     <div id="score"></div>
     <div id="specialCount"></div>
