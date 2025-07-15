@@ -125,8 +125,24 @@ window.onload = () => {
         messageDiv.innerText = who==='B' ? "REVENGE! Click to flip or QUIT." : "REVENGE! White is thinking...";
         updateSpecialCount();
         updateDisplay();
-        if (who === 'W') setTimeout(aiRevenge, 800);
-        else revengeBtn.style.display = 'inline';
+
+        if (who === 'W') {
+            setTimeout(() => {
+                let emptyCells = board.flat().filter(c => c === '.').length;
+                let probability = 0.2;
+                if (emptyCells <= 10) probability = 0.9;
+                else if (emptyCells <= 20) probability = 0.7;
+                else if (emptyCells <= 30) probability = 0.4;
+
+                if (Math.random() < probability) {
+                    aiRevenge();
+                } else {
+                    endRevenge();
+                }
+            }, 800);
+        } else {
+            revengeBtn.style.display = 'inline';
+        }
     }
 
     function triggerRevenge(x, y, color) {
