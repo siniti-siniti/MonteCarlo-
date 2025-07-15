@@ -1,8 +1,8 @@
 let canvas, ctx;
 let size, cellSize;
 let board = [], player = 'B', specialMode = false, specialPlayer = '';
-let gameOver = false, specialCount = 0, chainCount = 0;
-let blackRevengeLeft = 0, whiteRevengeLeft = 0, canRevenge = false;
+let gameOver = false, chainCount = 0;
+let blackRevengeLeft = 0, whiteRevengeLeft = 0;
 let difficulty = 'easy';
 let aiEnabled = true;
 
@@ -14,14 +14,13 @@ const specialCountDiv = document.getElementById("specialCount");
 document.getElementById("startBtn").addEventListener("click", startGame);
 
 function startGame() {
-    // 初期設定を取得
     size = parseInt(document.getElementById("boardSize").value);
     cellSize = 400 / size;
-    blackRevengeLeft = whiteRevengeLeft = document.getElementById("revengeLimit").value === "unlimited" ? 9999 : parseInt(document.getElementById("revengeLimit").value);
+    blackRevengeLeft = whiteRevengeLeft = 
+        parseInt(document.getElementById("revengeLimit").value);
     difficulty = document.getElementById("difficulty").value;
     aiEnabled = true;
 
-    // UIロック
     document.getElementById("boardSize").disabled = true;
     document.getElementById("revengeLimit").disabled = true;
     document.getElementById("difficulty").disabled = true;
@@ -29,6 +28,7 @@ function startGame() {
 
     canvas = document.getElementById("board");
     ctx = canvas.getContext("2d");
+    canvas.style.display = "block";
 
     initBoard();
     updateDisplay();
@@ -43,9 +43,7 @@ function initBoard() {
     gameOver = false;
     specialMode = false;
     specialPlayer = '';
-    specialCount = 0;
     chainCount = 0;
-    canRevenge = false;
     revengeBtn.style.display = 'none';
     document.body.className = "";
     messageDiv.innerText = "";
@@ -85,17 +83,15 @@ function drawBoard() {
         }
     }
 }
+
 function updateScore() {
     let b = 0, w = 0;
-    board.flat().forEach(cell => {
-        if (cell === 'B') b++;
-        else if (cell === 'W') w++;
-    });
-    scoreDiv.innerText = `Black: ${b}　White: ${w}`;
+    board.flat().forEach(c => { if (c==='B') b++; else if (c==='W') w++; });
+    scoreDiv.innerText = `Black: ${b}  White: ${w}`;
 }
 
 function updateSpecialCount() {
-    specialCountDiv.innerText = `Black Revenges Left: ${blackRevengeLeft} / White: ${whiteRevengeLeft}`;
+    specialCountDiv.innerText = `Black Revenges Left: ${blackRevengeLeft} | White: ${whiteRevengeLeft}`;
 }
 
 function getFlips(x, y, p) {
@@ -127,56 +123,51 @@ function applyMove(x, y, p) {
 
 canvas.addEventListener("click", e => {
     if (gameOver) return;
-    let x = Math.floor(e.offsetX / cellSize);
-    let y = Math.floor(e.offsetY / cellSize);
-
+    let x = Math.floor(e.offsetX / cellSize), y = Math.floor(e.offsetY / cellSize);
     if (specialMode) {
         if (specialPlayer === 'B' && board[y][x] === 'W') triggerRevenge(x, y, 'B');
         else if (specialPlayer === 'W' && board[y][x] === 'B') triggerRevenge(x, y, 'W');
         return;
     }
-
-    if (player !== 'B') return;  // プレイヤーは常に黒（先手）のみ操作
+    if (player !== 'B') return;
 
     let flips = getFlips(x, y, player);
     if (flips === 0) return;
-
     applyMove(x, y, player);
     updateDisplay();
 
     if (flips >= 2 && whiteRevengeLeft > 0) {
-        specialMode = true;
-        specialPlayer = 'W';
-        whiteRevengeLeft--;
-        messageDiv.innerText = "REVENGE! White is choosing...";
-        revengeBtn.style.display = 'inline';
-        revengeBtn.classList.add('flash');
-        setTimeout(aiRevenge, 1000);
+        startRevenge('W');
     } else {
         nextTurn();
     }
 });
 
-function triggerRevenge(x, y, newColor) {
-    board[y][x] = newColor;
-    let flips = getFlips(x, y, newColor);
-    applyMove(x, y, newColor);
-    updateDisplay();
-    if (flips >= 2 && (newColor === 'B' ? whiteRevengeLeft : blackRevengeLeft) > 0) {
-        specialPlayer = (newColor === 'B') ? 'W' : 'B';
-        if (specialPlayer === 'W') {
-            whiteRevengeLeft--;
-            messageDiv.innerText = "REVENGE! White is choosing...";
-            setTimeout(aiRevenge, 1000);
-        } else {
-            blackRevengeLeft--;
-            messageDiv.innerText = "REVENGE! Click to revenge or QUIT.";
-            revengeBtn.style.display = 'inline';
-            revengeBtn.classList.add('flash');
-        }
-    } else {
-        endRevenge();
+function startRevenge(who) {
+    specialMode = true;
+    specialPlayer = who;
+    chainCount++;
+    if (who === 'B') blackRevengeLeft--;
+    else whiteRevengeLeft--;
+    let lvl = chainCount >= 3 ? 3 : chainCount;
+    document.body.className = `revenge-level-${lvl}-${who==='B'?'black':'white'}`;
+    messageDiv.innerText = who==='B' ? "REVENGE! Click to flip or QUIT." : "REVENGE! White is thinking...";
+    updateSpecialCount();
+    if (who === 'W') setTimeout(aiRevenge, 1000);
+    else {
+        revengeBtn.style.display = 'inline';
+        revengeBtn.classList.add('flash');
     }
+}
+
+function triggerRevenge(x, y, color) {
+    board[y][x] = color;
+    let flips = getFlips(x, y, color);
+    applyMove(x, y, color);
+    updateDisplay();
+    if (flips >= 2 && (color === 'B' ? whiteRevengeLeft : blackRevengeLeft) > 0) {
+        startRevenge(color === 'B' ? 'W' : 'B');
+    } else endRevenge();
 }
 
 function aiRevenge() {
@@ -184,15 +175,14 @@ function aiRevenge() {
     for (let y = 0; y < size; y++)
         for (let x = 0; x < size; x++)
             if (board[y][x] === 'B') targets.push([x, y]);
-
-    if (targets.length === 0) {
-        endRevenge();
-        return;
-    }
-
-    const [x, y] = targets[Math.floor(Math.random() * targets.length)];
+    if (!targets.length) return endRevenge();
+    let [x, y] = targets[Math.floor(Math.random() * targets.length)];
     triggerRevenge(x, y, 'W');
 }
+
+revengeBtn.addEventListener("click", () => {
+    if (specialMode && specialPlayer === 'B') endRevenge();
+});
 
 function endRevenge() {
     specialMode = false;
@@ -201,26 +191,18 @@ function endRevenge() {
     document.body.className = "";
     messageDiv.innerText = "";
     revengeBtn.style.display = 'none';
-    revengeBtn.classList.remove('flash');
     nextTurn();
 }
 
-revengeBtn.addEventListener("click", () => {
-    if (specialMode && specialPlayer === 'B') {
-        endRevenge(); // プレイヤーがリベンジを放棄
-    }
-});
-
 function nextTurn() {
-    player = (player === 'B') ? 'W' : 'B';
+    player = player === 'B' ? 'W' : 'B';
     if (!hasValidMove(player)) {
-        messageDiv.innerText = `${player} has no valid moves. Passing...`;
-        player = (player === 'B') ? 'W' : 'B';
+        messageDiv.innerText = `${player==='B'?'Black':'White'} has no moves. Passing...`;
+        player = player === 'B' ? 'W' : 'B';
         if (!hasValidMove(player)) return showResult();
         setTimeout(nextTurn, 500);
         return;
     }
-
     updateDisplay();
     if (player === 'W' && aiEnabled) setTimeout(aiMove, 300);
 }
@@ -234,7 +216,6 @@ function aiMove() {
     for (let y = 0; y < size; y++)
         for (let x = 0; x < size; x++)
             if (getFlips(x, y, 'W') > 0) moves.push([x, y]);
-
     if (!moves.length) return nextTurn();
 
     let x, y;
@@ -243,10 +224,10 @@ function aiMove() {
     } else if (difficulty === 'hard') {
         let best = -1;
         for (const [mx, my] of moves) {
-            const score = getFlips(mx, my, 'W');
+            let score = getFlips(mx, my, 'W');
             if (score > best) [x, y, best] = [mx, my, score];
         }
-    } else if (difficulty === 'montecarlo') {
+    } else {
         let bestRate = -1;
         for (const [mx, my] of moves) {
             let wins = 0;
@@ -257,81 +238,68 @@ function aiMove() {
             if (rate > bestRate) [x, y, bestRate] = [mx, my, rate];
         }
     }
-
     let flips = getFlips(x, y, 'W');
     applyMove(x, y, 'W');
     updateDisplay();
-
     if (flips >= 2 && blackRevengeLeft > 0) {
-        specialMode = true;
-        specialPlayer = 'B';
-        blackRevengeLeft--;
-        messageDiv.innerText = "REVENGE! Click to revenge or QUIT.";
-        revengeBtn.style.display = 'inline';
-        revengeBtn.classList.add('flash');
-    } else {
-        nextTurn();
-    }
+        startRevenge('B');
+    } else nextTurn();
 }
 
-function simulatePlayout(startMove, simBoard) {
+function simulatePlayout([x, y], simBoard) {
     let simPlayer = 'W';
-    applyMoveSim(startMove[0], startMove[1], simPlayer, simBoard);
+    applyMoveSim(x, y, simPlayer, simBoard);
     simPlayer = 'B';
     while (true) {
-        const moves = [];
-        for (let y = 0; y < size; y++)
-            for (let x = 0; x < size; x++)
-                if (getFlipsSim(x, y, simPlayer, simBoard) > 0) moves.push([x, y]);
-
+        let moves = [];
+        for (let yy = 0; yy < size; yy++)
+            for (let xx = 0; xx < size; xx++)
+                if (getFlipsSim(xx, yy, simPlayer, simBoard) > 0) moves.push([xx, yy]);
         if (!moves.length) {
             simPlayer = simPlayer === 'B' ? 'W' : 'B';
             if (!moves.length) break;
             continue;
         }
-
-        const [x, y] = moves[Math.floor(Math.random() * moves.length)];
-        applyMoveSim(x, y, simPlayer, simBoard);
+        let [mx, my] = moves[Math.floor(Math.random() * moves.length)];
+        applyMoveSim(mx, my, simPlayer, simBoard);
         simPlayer = simPlayer === 'B' ? 'W' : 'B';
     }
-
     let b = 0, w = 0;
-    for (let row of simBoard) for (let c of row) {
-        if (c === 'B') b++; else if (c === 'W') w++;
-    }
+    simBoard.flat().forEach(c => { if (c==='B') b++; else if (c==='W') w++; });
     return b > w ? 'B' : w > b ? 'W' : 'D';
 }
 
-function getFlipsSim(x, y, p, board) {
-    if (board[y][x] !== '.') return 0;
+function getFlipsSim(x, y, p, simBoard) {
+    if (simBoard[y][x] !== '.') return 0;
     let dirs = [[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]], total = 0;
     for (let [dx, dy] of dirs) {
         let nx = x + dx, ny = y + dy, flips = 0;
-        while (nx >= 0 && nx < size && ny >= 0 && ny < size && board[ny][nx] === (p === 'B' ? 'W' : 'B')) {
+        while (nx >= 0 && nx < size && ny >= 0 && ny < size && simBoard[ny][nx] === (p === 'B' ? 'W' : 'B')) {
             flips++; nx += dx; ny += dy;
         }
-        if (flips > 0 && nx >= 0 && nx < size && ny >= 0 && ny < size && board[ny][nx] === p) total += flips;
+        if (flips > 0 && nx >= 0 && nx < size && ny >= 0 && ny < size && simBoard[ny][nx] === p) total += flips;
     }
     return total;
 }
 
-function applyMoveSim(x, y, p, board) {
-    board[y][x] = p;
+function applyMoveSim(x, y, p, simBoard) {
+    simBoard[y][x] = p;
     let dirs = [[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]];
     for (let [dx, dy] of dirs) {
         let nx = x + dx, ny = y + dy, path = [];
-        while (nx >= 0 && nx < size && ny >= 0 && ny < size && board[ny][nx] === (p === 'B' ? 'W' : 'B')) {
+        while (nx >= 0 && nx < size && ny >= 0 && ny < size && simBoard[ny][nx] === (p === 'B' ? 'W' : 'B')) {
             path.push([nx, ny]); nx += dx; ny += dy;
         }
-        if (path.length && nx >= 0 && nx < size && ny >= 0 && ny < size && board[ny][nx] === p)
-            path.forEach(([fx, fy]) => board[fy][fx] = p);
+        if (path.length && nx >= 0 && nx < size && ny >= 0 && ny < size && simBoard[ny][nx] === p)
+            path.forEach(([fx, fy]) => simBoard[fy][fx] = p);
     }
 }
 
 function showResult() {
     gameOver = true;
     let b = 0, w = 0;
-    board.flat().forEach(c => { if (c === 'B') b++; else if (c === 'W') w++; });
-    messageDiv.innerText = b > w ? `Game Over! Black wins (${b} vs ${w})` :
-                          w > b ? `Game Over! White wins (${w} vs ${b})` : `Game Over! It's a draw (${b} vs ${w})`;
+    board.flat().forEach(c => { if (c==='B') b++; else if (c==='W') w++; });
+    messageDiv.innerText = b > w ? `Game Over! Black wins (${b} vs ${w})`
+        : w > b ? `Game Over! White wins (${w} vs ${b})`
+        : `Game Over! It's a draw (${b} vs ${w})`;
 }
