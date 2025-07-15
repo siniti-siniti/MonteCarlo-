@@ -274,8 +274,33 @@ window.onload = () => {
         else monteCarloAI();
     }
 
-    function randomAI() { /* ... */ }
-    function greedyAI() { /* ... */ }
+    function randomAI() {
+        let moves = [];
+        for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
+            if (getFlips(x, y, 'W')>0) moves.push([x,y]);
+        }
+        if (moves.length===0) { nextTurn(); return; }
+        let [mx,my] = moves[Math.floor(Math.random()*moves.length)];
+        let flips = getFlips(mx, my, 'W');
+        applyMove(mx, my, 'W');
+        updateDisplay();
+        if (flips >=2 && blackRevengeLeft > 0) startRevenge('B');
+        else nextTurn();
+    }
+    function greedyAI() {
+        let best=null, bestCount=0;
+        for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
+            let flips = getFlips(x,y,'W');
+            if (flips>bestCount) { best=[x,y]; bestCount=flips; }
+        }
+        if (!best) { nextTurn(); return; }
+        let [mx,my] = best;
+        let flips = getFlips(mx, my, 'W');
+        applyMove(mx, my, 'W');
+        updateDisplay();
+        if (flips >=2 && blackRevengeLeft > 0) startRevenge('B');
+        else nextTurn();
+    }
 
     function monteCarloAI() {
         let moves = [];
