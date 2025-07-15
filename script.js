@@ -218,8 +218,10 @@ window.onload = () => {
                     endRevenge();
                 }
             }, 800);
+        } else {
+            revengeBtn.style.display = 'inline';
         }
-    }  // ← これで完全に閉じました！
+    }
 
     function triggerRevenge(x, y, color) {
         seRevengeFlip.play();
