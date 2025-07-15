@@ -8,17 +8,14 @@ window.onload = () => {
     let aiEnabled = true;
     let passCount = 0;
 
-    // BGM
-    const menuMusic = new Audio("メニュー画面.m4a");
-    menuMusic.loop = true;
-    menuMusic.play();
-
+    // BGM制御
     const musicList = [
         new Audio("ピピポピポ.m4a"),
         new Audio("待機.m4a"),
         new Audio("敗走.m4a")
     ];
     let currentMusic = null;
+    let musicEnabled = true;
 
     // 効果音
     const seStart = new Audio("スタート.mp3");
@@ -28,10 +25,21 @@ window.onload = () => {
     const seCancel = new Audio("キャンセル1.mp3");
     const seEnd = new Audio("終了.mp3");
 
+    // 音量
+    let volume = 0.5;
+    setVolumeAll(volume);
+
+    function setVolumeAll(v) {
+        [...musicList, seStart, sePlace, seRevenge, seRevengeFlip, seCancel, seEnd].forEach(a => a.volume = v);
+    }
+
+    // UI
     const revengeBtn = document.getElementById("revengeBtn");
     const scoreDiv = document.getElementById("score");
     const messageDiv = document.getElementById("message");
     const specialCountDiv = document.getElementById("specialCount");
+    const musicBtn = document.getElementById("musicToggle");
+    const volumeSlider = document.getElementById("volumeControl");
 
     document.getElementById("startBtn").addEventListener("click", startGame);
     revengeBtn.addEventListener("click", () => {
@@ -41,7 +49,23 @@ window.onload = () => {
         }
     });
 
+    musicBtn.addEventListener("click", () => {
+        musicEnabled = !musicEnabled;
+        musicBtn.innerText = musicEnabled ? "BGM: ON" : "BGM: OFF";
+        if (musicEnabled) {
+            if (currentMusic) currentMusic.play();
+        } else {
+            if (currentMusic) currentMusic.pause();
+        }
+    });
+
+    volumeSlider.addEventListener("input", () => {
+        volume = parseFloat(volumeSlider.value);
+        setVolumeAll(volume);
+    });
+
     function startRandomMusic() {
+        if (!musicEnabled) return;
         if (currentMusic) {
             currentMusic.pause();
             currentMusic.currentTime = 0;
@@ -53,10 +77,6 @@ window.onload = () => {
 
     function startGame() {
         seStart.play();
-
-        menuMusic.pause();
-        menuMusic.currentTime = 0;
-
         startRandomMusic();
 
         size = parseInt(document.getElementById("boardSize").value);
@@ -125,7 +145,6 @@ window.onload = () => {
         document.body.className = "";
         messageDiv.innerText = "";
     }
-
     function drawBoard() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         for (let y = 0; y < size; y++) {
@@ -231,6 +250,21 @@ window.onload = () => {
 
     function hasValidMove(p) {
         return board.some((row, y) => row.some((_, x) => getFlips(x, y, p) > 0));
+    }
+
+    function getFlips(x, y, p) {
+        if (board[y][x] !== '.') return 0;
+        let opp = p === 'B' ? 'W' : 'B';
+        let count = 0;
+        for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++) {
+            if (dx===0 && dy===0) continue;
+            let nx=x+dx, ny=y+dy, line=0;
+            while (nx>=0 && nx<size && ny>=0 && ny<size && board[ny][nx]===opp) {
+                nx+=dx; ny+=dy; line++;
+            }
+            if (line>0 && nx>=0 && nx<size && ny>=0 && ny<size && board[ny][nx]===p) count+=line;
+        }
+        return count;
     }
     function applyMove(x, y, p) {
         board[y][x] = p;
@@ -358,7 +392,6 @@ window.onload = () => {
         }
         return count;
     }
-
 
     function simulatePlayout(turns, tempBoard) {
         let p=turns[0];
