@@ -8,6 +8,26 @@ window.onload = () => {
     let aiEnabled = true;
     let passCount = 0;
 
+    // BGM
+    const menuMusic = new Audio("メニュー画面.m4a");
+    menuMusic.loop = true;
+    menuMusic.play();
+
+    const musicList = [
+        new Audio("ピピポピポ.m4a"),
+        new Audio("待機.m4a"),
+        new Audio("敗走.m4a")
+    ];
+    let currentMusic = null;
+
+    // 効果音
+    const seStart = new Audio("スタート.mp3");
+    const sePlace = new Audio("石をおく.mp3");
+    const seRevenge = new Audio("リベンジ.mp3");
+    const seRevengeFlip = new Audio("リベンジ時.mp3");
+    const seCancel = new Audio("キャンセル1.mp3");
+    const seEnd = new Audio("終了.mp3");
+
     const revengeBtn = document.getElementById("revengeBtn");
     const scoreDiv = document.getElementById("score");
     const messageDiv = document.getElementById("message");
@@ -16,11 +36,29 @@ window.onload = () => {
     document.getElementById("startBtn").addEventListener("click", startGame);
     revengeBtn.addEventListener("click", () => {
         if (specialMode && specialPlayer === 'B') {
+            seCancel.play();
             endRevenge();
         }
     });
 
+    function startRandomMusic() {
+        if (currentMusic) {
+            currentMusic.pause();
+            currentMusic.currentTime = 0;
+        }
+        currentMusic = musicList[Math.floor(Math.random() * musicList.length)];
+        currentMusic.loop = true;
+        currentMusic.play();
+    }
+
     function startGame() {
+        seStart.play();
+
+        menuMusic.pause();
+        menuMusic.currentTime = 0;
+
+        startRandomMusic();
+
         size = parseInt(document.getElementById("boardSize").value);
         blackRevengeLeft = whiteRevengeLeft = parseInt(document.getElementById("revengeLimit").value);
         difficulty = document.getElementById("difficulty").value;
@@ -61,6 +99,7 @@ window.onload = () => {
             if (flips === 0) return;
 
             applyMove(x, y, player);
+            sePlace.play();
             updateDisplay();
 
             if (flips >= 2 && whiteRevengeLeft > 0) {
@@ -117,6 +156,7 @@ window.onload = () => {
     }
 
     function startRevenge(who) {
+        seRevenge.play();
         specialMode = true;
         specialPlayer = who;
         chainCount++;
@@ -146,6 +186,7 @@ window.onload = () => {
     }
 
     function triggerRevenge(x, y, color) {
+        seRevengeFlip.play();
         if (color === 'B') blackRevengeLeft--;
         else whiteRevengeLeft--;
 
@@ -177,6 +218,7 @@ window.onload = () => {
             player = player === 'B' ? 'W' : 'B';
             if (!hasValidMove(player)) {
                 messageDiv.innerText = "No moves for both. Ending game.";
+                seEnd.play();
                 showResult();
                 return;
             }
@@ -190,37 +232,6 @@ window.onload = () => {
     function hasValidMove(p) {
         return board.some((row, y) => row.some((_, x) => getFlips(x, y, p) > 0));
     }
-
-    function getFlips(x, y, p) {
-        if (board[y][x] !== '.') return 0;
-        let opp = p === 'B' ? 'W' : 'B';
-        let count = 0;
-        for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++) {
-            if (dx===0 && dy===0) continue;
-            let nx=x+dx, ny=y+dy, line=0;
-            while (nx>=0 && nx<size && ny>=0 && ny<size && board[ny][nx]===opp) {
-                nx+=dx; ny+=dy; line++;
-            }
-            if (line>0 && nx>=0 && nx<size && ny>=0 && ny<size && board[ny][nx]===p) count+=line;
-        }
-        return count;
-    }
-
-    function getFlipsTemp(x, y, p, tempBoard) {
-        if (tempBoard[y][x] !== '.') return 0;
-        let opp = p === 'B' ? 'W' : 'B';
-        let count = 0;
-        for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++) {
-            if (dx===0 && dy===0) continue;
-            let nx=x+dx, ny=y+dy, line=0;
-            while (nx>=0 && nx<size && ny>=0 && ny<size && tempBoard[ny][nx]===opp) {
-                nx+=dx; ny+=dy; line++;
-            }
-            if (line>0 && nx>=0 && nx<size && ny>=0 && ny<size && tempBoard[ny][nx]===p) count+=line;
-        }
-        return count;
-    }
-
     function applyMove(x, y, p) {
         board[y][x] = p;
         let opp = p === 'B' ? 'W' : 'B';
@@ -283,10 +294,12 @@ window.onload = () => {
         let [mx,my] = moves[Math.floor(Math.random()*moves.length)];
         let flips = getFlips(mx, my, 'W');
         applyMove(mx, my, 'W');
+        sePlace.play();
         updateDisplay();
         if (flips >=2 && blackRevengeLeft > 0) startRevenge('B');
         else nextTurn();
     }
+
     function greedyAI() {
         let best=null, bestCount=0;
         for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
@@ -297,6 +310,7 @@ window.onload = () => {
         let [mx,my] = best;
         let flips = getFlips(mx, my, 'W');
         applyMove(mx, my, 'W');
+        sePlace.play();
         updateDisplay();
         if (flips >=2 && blackRevengeLeft > 0) startRevenge('B');
         else nextTurn();
@@ -324,6 +338,7 @@ window.onload = () => {
         let [mx,my] = bestMove;
         let flips = getFlips(mx, my, 'W');
         applyMove(mx, my, 'W');
+        sePlace.play();
         updateDisplay();
         if (flips >=2 && blackRevengeLeft > 0) startRevenge('B');
         else nextTurn();
