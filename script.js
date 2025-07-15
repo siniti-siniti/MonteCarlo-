@@ -37,6 +37,35 @@ window.onload = () => {
 
         initBoard();
         updateDisplay();
+
+        // ✅ startGame 内にクリックイベントを設置
+        canvas.onclick = e => {
+            if (gameOver) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / cellSize);
+            const y = Math.floor((e.clientY - rect.top) / cellSize);
+
+            if (x < 0 || x >= size || y < 0 || y >= size) return;
+
+            if (specialMode) {
+                if (specialPlayer === 'B' && board[y][x] === 'W') triggerRevenge(x, y, 'B');
+                else if (specialPlayer === 'W' && board[y][x] === 'B') triggerRevenge(x, y, 'W');
+                return;
+            }
+            if (player !== 'B') return;
+
+            let flips = getFlips(x, y, player);
+            if (flips === 0) return;
+
+            applyMove(x, y, player);
+            updateDisplay();
+
+            if (flips >= 2 && whiteRevengeLeft > 0) {
+                startRevenge('W');
+            } else {
+                nextTurn();
+            }
+        };
     }
 
     function initBoard() {
@@ -120,45 +149,10 @@ window.onload = () => {
             while (nx >= 0 && nx < size && ny >= 0 && ny < size && board[ny][nx] === (p === 'B' ? 'W' : 'B')) {
                 path.push([nx, ny]); nx += dx; ny += dy;
             }
-            if (path.length && nx >= 0 && nx < size && ny >= 0 && ny < size && board[ny][nx] === p) {
+            if (path.length && nx >= 0 && nx < size && ny >= 0 && ny < size && board[ny][nx] === p)
                 path.forEach(([fx, fy]) => board[fy][fx] = p);
-            }
         }
     }
-
-    canvas.addEventListener("click", e => {
-        if (gameOver) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = Math.floor((e.clientX - rect.left) / cellSize);
-        const y = Math.floor((e.clientY - rect.top) / cellSize);
-
-        console.log(`Click at x=${x}, y=${y}, player=${player}`);
-
-        if (x < 0 || x >= size || y < 0 || y >= size) return;
-
-        if (specialMode) {
-            if (specialPlayer === 'B' && board[y][x] === 'W') triggerRevenge(x, y, 'B');
-            else if (specialPlayer === 'W' && board[y][x] === 'B') triggerRevenge(x, y, 'W');
-            return;
-        }
-        if (player !== 'B') {
-            console.log("Not your turn: player=", player);
-            return;
-        }
-
-        let flips = getFlips(x, y, player);
-        console.log(`Possible flips at ${x},${y} = ${flips}`);
-        if (flips === 0) return;
-
-        applyMove(x, y, player);
-        updateDisplay();
-
-        if (flips >= 2 && whiteRevengeLeft > 0) {
-            startRevenge('W');
-        } else {
-            nextTurn();
-        }
-    });
 
     function startRevenge(who) {
         specialMode = true;
@@ -170,7 +164,7 @@ window.onload = () => {
         document.body.className = `revenge-level-${lvl}-${who==='B'?'black':'white'}`;
         messageDiv.innerText = who==='B' ? "REVENGE! Click to flip or QUIT." : "REVENGE! White is thinking...";
         updateSpecialCount();
-        if (who === 'W') setTimeout(aiRevenge, 1000);
+        if (who === 'W') setTimeout(aiRevenge, 800);
         else revengeBtn.style.display = 'inline';
     }
 
