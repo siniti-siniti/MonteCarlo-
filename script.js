@@ -303,8 +303,7 @@ window.onload = () => {
         let w=tempBoard.flat().filter(c=>c==='W').length;
         return b>w?'B':w>b?'W':'D';
     }
-};
-function aiRevenge() {
+    function aiRevenge() {
     let moves=[];
     for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
         if (board[y][x]==='B') moves.push([x,y]);
@@ -312,4 +311,6 @@ function aiRevenge() {
     if (moves.length===0) { endRevenge(); return; }
     let [rx, ry] = moves[Math.floor(Math.random() * moves.length)];
     triggerRevenge(rx, ry, 'W');
-}
+    }
+};
+
