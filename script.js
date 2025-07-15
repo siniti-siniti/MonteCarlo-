@@ -198,19 +198,13 @@ window.onload = () => {
 
         if (who === 'W') {
             setTimeout(() => {
-                let emptyCells = board.flat().filter(c => c === '.').length;
                 let totalCells = size * size;
                 let wCount = board.flat().filter(c => c === 'W').length;
                 let wRatio = wCount / totalCells;
 
-                let probability = 0.2;
-                if (emptyCells <= 10) probability = 0.9;
-                else if (emptyCells <= 20) probability = 0.7;
-                else if (emptyCells <= 30) probability = 0.4;
-
-                if (wRatio < 0.3) {
-                    probability = Math.max(probability, 0.8);
-                }
+                // AI石が少ないほどリベンジ率UP
+                let probability = 1.0 - wRatio;
+                probability = Math.min(1, Math.max(0.2, probability)); // 最小20%、最大100%
 
                 if (Math.random() < probability) {
                     aiRevenge();
