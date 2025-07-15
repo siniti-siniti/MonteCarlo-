@@ -10,9 +10,9 @@ window.onload = () => {
 
     // BGM
     const musicList = [
-        new Audio("ピピポピポ.m4a"),
-        new Audio("待機.m4a"),
-        new Audio("敗走.m4a")
+        new Audio("ピピポピポ.mp3"),
+        new Audio("待機.mp3"),
+        new Audio("敗走.mp3")
     ];
     let currentMusic = null;
     let musicEnabled = true;
