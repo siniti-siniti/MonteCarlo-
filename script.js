@@ -220,7 +220,7 @@ window.onload = () => {
                 }
             }, 800);
         }
-
+    }
 
     function triggerRevenge(x, y, color) {
         seRevengeFlip.play();
