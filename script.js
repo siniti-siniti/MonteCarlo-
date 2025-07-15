@@ -1,17 +1,23 @@
-let canvas, ctx;
-let size, cellSize;
-let board = [], player = 'B', specialMode = false, specialPlayer = '';
-let gameOver = false, chainCount = 0;
-let blackRevengeLeft = 0, whiteRevengeLeft = 0;
-let difficulty = 'easy';
-let aiEnabled = true;
+window.onload = () => {
+    let canvas, ctx;
+    let size, cellSize;
+    let board = [], player = 'B', specialMode = false, specialPlayer = '';
+    let gameOver = false, chainCount = 0;
+    let blackRevengeLeft = 0, whiteRevengeLeft = 0;
+    let difficulty = 'easy';
+    let aiEnabled = true;
 
-const revengeBtn = document.getElementById("revengeBtn");
-const scoreDiv = document.getElementById("score");
-const messageDiv = document.getElementById("message");
-const specialCountDiv = document.getElementById("specialCount");
+    const revengeBtn = document.getElementById("revengeBtn");
+    const scoreDiv = document.getElementById("score");
+    const messageDiv = document.getElementById("message");
+    const specialCountDiv = document.getElementById("specialCount");
 
-document.getElementById("startBtn").addEventListener("click", startGame);
+    document.getElementById("startBtn").addEventListener("click", startGame);
+
+    // ここに全ての関数(initBoard, updateDisplay, drawBoard など)
+    // ...
+};
+
 
 function startGame() {
     size = parseInt(document.getElementById("boardSize").value);
