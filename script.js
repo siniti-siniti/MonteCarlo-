@@ -210,6 +210,51 @@ function nextTurn() {
     if (player === 'W') setTimeout(aiMove, 500);
 }
 
+function aiMove() {
+    let moves = getValidMoves('W');
+    if (moves.length === 0) {
+        nextTurn();
+        return;
+    }
+
+    let x, y;
+    if (difficulty === 'easy') {
+        [x, y] = moves[Math.floor(Math.random() * moves.length)];
+    } else if (difficulty === 'hard') {
+        let maxFlips = -1;
+        for (let move of moves) {
+            let flips = getFlips(move[0], move[1], 'W');
+            if (flips > maxFlips) {
+                maxFlips = flips;
+                [x, y] = move;
+            }
+        }
+    } else { // montecarlo
+        let bestWinRate = -1;
+        for (let move of moves) {
+            let wins = 0;
+            for (let i = 0; i < 10; i++) {
+                if (simulatePlayout(move, JSON.parse(JSON.stringify(board))) === 'W') wins++;
+            }
+            let rate = wins / 10;
+            if (rate > bestWinRate) {
+                bestWinRate = rate;
+                [x, y] = move;
+            }
+        }
+    }
+
+    let flips = getFlips(x, y, 'W');
+    applyMove(x, y, 'W');
+    drawBoard();
+
+    if (flips >= 2) {
+        startRevenge('B');
+    } else {
+        nextTurn();
+    }
+}
+
 function hasValidMove(p) {
     for (let y = 0; y < size; y++)
         for (let x = 0; x < size; x++)
@@ -227,36 +272,75 @@ function getValidMoves(p) {
     return moves;
 }
 
-function aiMove() {
-    let moves = getValidMoves('W');
-    if (moves.length === 0) {
-        nextTurn();
-        return;
-    }
+// ==== モンテカルロ用 ====
+function getValidMovesSim(p, simBoard) {
+    let moves = [];
+    for (let y = 0; y < size; y++)
+        for (let x = 0; x < size; x++)
+            if (getFlipsSim(x, y, p, simBoard) > 0)
+                moves.push([x, y]);
+    return moves;
+}
 
-    let x, y;
-    if (difficulty === 'easy') {
-        [x, y] = moves[Math.floor(Math.random() * moves.length)];
-    } else {
-        let maxFlips = -1;
-        for (let move of moves) {
-            let flips = getFlips(move[0], move[1], 'W');
-            if (flips > maxFlips) {
-                maxFlips = flips;
-                [x, y] = move;
+function getFlipsSim(x, y, p, simBoard) {
+    if (simBoard[y][x] !== '.') return 0;
+    let dirs = [[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]];
+    let total = 0;
+    for (let [dx, dy] of dirs) {
+        let nx = x + dx, ny = y + dy;
+        let flips = 0;
+        while (nx >= 0 && nx < size && ny >= 0 && ny < size && simBoard[ny][nx] === (p === 'B' ? 'W' : 'B')) {
+            flips++;
+            nx += dx; ny += dy;
+        }
+        if (flips > 0 && nx >= 0 && nx < size && ny >= 0 && ny < size && simBoard[ny][nx] === p) {
+            total += flips;
+        }
+    }
+    return total;
+}
+
+function applyMoveSim(x, y, p, simBoard) {
+    let dirs = [[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]];
+    simBoard[y][x] = p;
+    for (let [dx, dy] of dirs) {
+        let nx = x + dx, ny = y + dy;
+        let path = [];
+        while (nx >= 0 && nx < size && ny >= 0 && ny < size && simBoard[ny][nx] === (p === 'B' ? 'W' : 'B')) {
+            path.push([nx, ny]);
+            nx += dx; ny += dy;
+        }
+        if (path.length > 0 && nx >= 0 && nx < size && ny >= 0 && ny < size && simBoard[ny][nx] === p) {
+            for (let [fx, fy] of path) {
+                simBoard[fy][fx] = p;
             }
         }
     }
+}
 
-    let flips = getFlips(x, y, 'W');
-    applyMove(x, y, 'W');
-    drawBoard();
-
-    if (flips >= 2) {
-        startRevenge('B');
-    } else {
-        nextTurn();
+function simulatePlayout(startMove, originalBoard) {
+    let simBoard = JSON.parse(JSON.stringify(originalBoard));
+    let simPlayer = 'W';
+    applyMoveSim(startMove[0], startMove[1], simPlayer, simBoard);
+    simPlayer = 'B';
+    while (true) {
+        let validMoves = getValidMovesSim(simPlayer, simBoard);
+        if (validMoves.length === 0) {
+            simPlayer = simPlayer === 'B' ? 'W' : 'B';
+            if (getValidMovesSim(simPlayer, simBoard).length === 0) break;
+            continue;
+        }
+        let [x, y] = validMoves[Math.floor(Math.random() * validMoves.length)];
+        applyMoveSim(x, y, simPlayer, simBoard);
+        simPlayer = simPlayer === 'B' ? 'W' : 'B';
     }
+    let b = 0, w = 0;
+    for (let row of simBoard)
+        for (let cell of row) {
+            if (cell === 'B') b++;
+            if (cell === 'W') w++;
+        }
+    return w > b ? 'W' : (b > w ? 'B' : 'D');
 }
 
 canvas.addEventListener("click", handleClick);
