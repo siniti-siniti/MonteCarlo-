@@ -16,9 +16,6 @@ window.onload = () => {
     document.getElementById("startBtn").addEventListener("click", startGame);
     revengeBtn.addEventListener("click", () => {
         if (specialMode && specialPlayer === 'B') {
-            // 回数を戻す（消費しない）
-            if (specialPlayer === 'B') blackRevengeLeft++;
-            else whiteRevengeLeft++;
             endRevenge();
         }
     });
@@ -174,109 +171,136 @@ window.onload = () => {
         if (player === 'W' && aiEnabled) setTimeout(aiMove, 300);
     }
 
-    // 省略した他の関数もすべて続きます（フルファイルには入ります）
-
     function hasValidMove(p) {
         return board.some((row, y) => row.some((_, x) => getFlips(x, y, p) > 0));
     }
 
-    function aiMove() {
-        let moves = [];
-        for (let y = 0; y < size; y++)
-            for (let x = 0; x < size; x++)
-                if (getFlips(x, y, 'W') > 0) moves.push([x, y]);
-        if (!moves.length) return nextTurn();
-
-        let x, y;
-        if (difficulty === 'easy') {
-            [x, y] = moves[Math.floor(Math.random() * moves.length)];
-        } else if (difficulty === 'hard') {
-            let best = -1;
-            for (const [mx, my] of moves) {
-                let score = getFlips(mx, my, 'W');
-                if (score > best) [x, y, best] = [mx, my, score];
+    function getFlips(x, y, p) {
+        if (board[y][x] !== '.') return 0;
+        let opp = p === 'B' ? 'W' : 'B';
+        let count = 0;
+        for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++) {
+            if (dx===0 && dy===0) continue;
+            let nx=x+dx, ny=y+dy, line=0;
+            while (nx>=0 && nx<size && ny>=0 && ny<size && board[ny][nx]===opp) {
+                nx+=dx; ny+=dy; line++;
             }
-        } else {
-            let bestRate = -1;
-            for (const [mx, my] of moves) {
-                let wins = 0;
-                for (let i = 0; i < 10; i++) {
-                    if (simulatePlayout([mx, my], JSON.parse(JSON.stringify(board))) === 'W') wins++;
-                }
-                let rate = wins / 10;
-                if (rate > bestRate) [x, y, bestRate] = [mx, my, rate];
-            }
+            if (line>0 && nx>=0 && nx<size && ny>=0 && ny<size && board[ny][nx]===p) count+=line;
         }
-        let flips = getFlips(x, y, 'W');
-        applyMove(x, y, 'W');
-        updateDisplay();
-        if (flips >= 2 && blackRevengeLeft > 0) {
-            startRevenge('B');
-        } else nextTurn();
+        return count;
     }
 
-    function simulatePlayout([x, y], simBoard) {
-        let simPlayer = 'W';
-        applyMoveSim(x, y, simPlayer, simBoard);
-        simPlayer = 'B';
-
-        while (true) {
-            let moves = [];
-            for (let yy = 0; yy < size; yy++)
-                for (let xx = 0; xx < size; xx++)
-                    if (getFlipsSim(xx, yy, simPlayer, simBoard) > 0) moves.push([xx, yy]);
-
-            if (!moves.length) {
-                simPlayer = simPlayer === 'B' ? 'W' : 'B';
-                moves = [];
-                for (let yy = 0; yy < size; yy++)
-                    for (let xx = 0; xx < size; xx++)
-                        if (getFlipsSim(xx, yy, simPlayer, simBoard) > 0) moves.push([xx, yy]);
-                if (!moves.length) break;
+    function applyMove(x, y, p) {
+        board[y][x] = p;
+        let opp = p === 'B' ? 'W' : 'B';
+        for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++) {
+            if (dx===0 && dy===0) continue;
+            let nx=x+dx, ny=y+dy, toFlip=[];
+            while (nx>=0 && nx<size && ny>=0 && ny<size && board[ny][nx]===opp) {
+                toFlip.push([nx,ny]); nx+=dx; ny+=dy;
             }
-
-            let [mx, my] = moves[Math.floor(Math.random() * moves.length)];
-            applyMoveSim(mx, my, simPlayer, simBoard);
-            simPlayer = simPlayer === 'B' ? 'W' : 'B';
+            if (toFlip.length>0 && nx>=0 && nx<size && ny>=0 && ny<size && board[ny][nx]===p)
+                toFlip.forEach(([fx,fy])=>board[fy][fx]=p);
         }
-
-        let b = 0, w = 0;
-        simBoard.flat().forEach(c => { if (c==='B') b++; else if (c==='W') w++; });
-        return b > w ? 'B' : w > b ? 'W' : 'D';
     }
 
-    function getFlipsSim(x, y, p, simBoard) {
-        if (simBoard[y][x] !== '.') return 0;
-        let dirs = [[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]], total = 0;
-        for (let [dx, dy] of dirs) {
-            let nx = x + dx, ny = y + dy, flips = 0;
-            while (nx >= 0 && nx < size && ny >= 0 && ny < size && simBoard[ny][nx] === (p === 'B' ? 'W' : 'B')) {
-                flips++; nx += dx; ny += dy;
-            }
-            if (flips > 0 && nx >= 0 && nx < size && ny >= 0 && ny < size && simBoard[ny][nx] === p) total += flips;
-        }
-        return total;
+    function updateDisplay() {
+        drawBoard();
+        let b = board.flat().filter(c=>c==='B').length;
+        let w = board.flat().filter(c=>c==='W').length;
+        scoreDiv.innerText = `Black: ${b}   White: ${w}`;
+        updateSpecialCount();
     }
 
-    function applyMoveSim(x, y, p, simBoard) {
-        simBoard[y][x] = p;
-        let dirs = [[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]];
-        for (let [dx, dy] of dirs) {
-            let nx = x + dx, ny = y + dy, path = [];
-            while (nx >= 0 && nx < size && ny >= 0 && ny < size && simBoard[ny][nx] === (p === 'B' ? 'W' : 'B')) {
-                path.push([nx, ny]); nx += dx; ny += dy;
-            }
-            if (path.length && nx >= 0 && nx < size && ny >= 0 && ny < size && simBoard[ny][nx] === p)
-                path.forEach(([fx, fy]) => simBoard[fy][fx] = p);
-        }
+    function updateSpecialCount() {
+        specialCountDiv.innerText = `Black Revenges Left: ${blackRevengeLeft} | White: ${whiteRevengeLeft}`;
     }
 
     function showResult() {
+        let b = board.flat().filter(c=>c==='B').length;
+        let w = board.flat().filter(c=>c==='W').length;
         gameOver = true;
-        let b = 0, w = 0;
-        board.flat().forEach(c => { if (c==='B') b++; else if (c==='W') w++; });
-        messageDiv.innerText = b > w ? `Game Over! Black wins (${b} vs ${w})`
-            : w > b ? `Game Over! White wins (${w} vs ${b})`
-            : `Game Over! It's a draw (${b} vs ${w})`;
+        messageDiv.innerText = b > w ? "Black wins!" : w > b ? "White wins!" : "Draw!";
+    }
+
+    function aiMove() {
+        if (difficulty === 'easy') randomAI();
+        else if (difficulty === 'hard') greedyAI();
+        else monteCarloAI();
+    }
+
+    function randomAI() {
+        let moves = [];
+        for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
+            if (getFlips(x, y, 'W')>0) moves.push([x,y]);
+        }
+        if (moves.length===0) { nextTurn(); return; }
+        let [mx,my] = moves[Math.floor(Math.random()*moves.length)];
+        let flips = getFlips(mx, my, 'W');
+        applyMove(mx, my, 'W');
+        updateDisplay();
+        if (flips >=2 && blackRevengeLeft > 0) startRevenge('B');
+        else nextTurn();
+    }
+
+    function greedyAI() {
+        let best=null, bestCount=0;
+        for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
+            let flips = getFlips(x,y,'W');
+            if (flips>bestCount) { best=[x,y]; bestCount=flips; }
+        }
+        if (!best) { nextTurn(); return; }
+        let [mx,my] = best;
+        let flips = getFlips(mx, my, 'W');
+        applyMove(mx, my, 'W');
+        updateDisplay();
+        if (flips >=2 && blackRevengeLeft > 0) startRevenge('B');
+        else nextTurn();
+    }
+
+    function monteCarloAI() {
+        let moves = [];
+        for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
+            if (getFlips(x,y,'W')>0) moves.push([x,y]);
+        }
+        if (moves.length===0) { nextTurn(); return; }
+
+        let bestMove=moves[0], bestScore=-1;
+        for (let [mx,my] of moves) {
+            let wins=0;
+            for (let i=0; i<5; i++) {
+                let temp=JSON.parse(JSON.stringify(board));
+                applyMove(mx, my, 'W');
+                let winner=simulatePlayout(['B'], temp);
+                if (winner==='W') wins++;
+            }
+            let score=wins/5;
+            if (score>bestScore) { bestScore=score; bestMove=[mx,my]; }
+        }
+        let [mx,my] = bestMove;
+        let flips = getFlips(mx, my, 'W');
+        applyMove(mx, my, 'W');
+        updateDisplay();
+        if (flips >=2 && blackRevengeLeft > 0) startRevenge('B');
+        else nextTurn();
+    }
+
+    function simulatePlayout(turns, tempBoard) {
+        let p=turns[0];
+        for (let i=0; i<50; i++) {
+            let moves=[];
+            for (let y=0; y<size; y++) for (let x=0; x<size; x++)
+                if (getFlips(x,y,p)>0) moves.push([x,y]);
+            if (moves.length===0) {
+                p=p==='B'?'W':'B';
+                continue;
+            }
+            let [mx,my]=moves[Math.floor(Math.random()*moves.length)];
+            applyMove(mx,my,p);
+            p=p==='B'?'W':'B';
+        }
+        let b=tempBoard.flat().filter(c=>c==='B').length;
+        let w=tempBoard.flat().filter(c=>c==='W').length;
+        return b>w?'B':w>b?'W':'D';
     }
 };
