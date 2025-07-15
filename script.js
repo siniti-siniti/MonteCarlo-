@@ -198,22 +198,29 @@ window.onload = () => {
 
         if (who === 'W') {
             setTimeout(() => {
-                let emptyCells = board.flat().filter(c => c === '.').length;
-                let probability = 0.2;
-                if (emptyCells <= 10) probability = 0.9;
-                else if (emptyCells <= 20) probability = 0.7;
-                else if (emptyCells <= 30) probability = 0.4;
+            let emptyCells = board.flat().filter(c => c === '.').length;
+            let totalCells = size * size;
+            let wCount = board.flat().filter(c => c === 'W').length;
+            let wRatio = wCount / totalCells;
 
-                if (Math.random() < probability) {
-                    aiRevenge();
-                } else {
-                    endRevenge();
-                }
-            }, 800);
-        } else {
-            revengeBtn.style.display = 'inline';
-        }
+            let probability = 0.2;
+            if (emptyCells <= 10) probability = 0.9;
+            else if (emptyCells <= 20) probability = 0.7;
+            else if (emptyCells <= 30) probability = 0.4;
+
+            // 👇 AIが石30%未満なら緊急的にリベンジ率アップ
+            if (wRatio < 0.3) {
+                probability = Math.max(probability, 0.8);
+            }
+
+            if (Math.random() < probability) {
+                aiRevenge();
+            } else {
+                endRevenge();
+            }
+        }, 800);
     }
+
 
     function triggerRevenge(x, y, color) {
         seRevengeFlip.play();
